@@ -1,0 +1,15 @@
+{
+  "name": "impftermin-brandenburg",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "check": "npm run typecheck && npm run lint",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint-and-fix": "eslint . --ext .ts --fix",
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "run": "ts-node src/index.ts",
+    "dev": "ts-node-dev --respawn src/index.ts"
+  }
+}
