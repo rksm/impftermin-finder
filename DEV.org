@@ -1,0 +1,17 @@
+#+STARTUP: showeverything
+
+* setup
+** run it
+#+begin_src shell
+pushd /Users/robert/projects/typescript/impftermin-brandenburg/
+npm run run
+
+# via ~/bin
+impftest
+#+end_src
+** run every hour
+[[file:~/Library/LaunchAgents/hn.kra.impftest.plist][hn.kra.impftest.plist]]
+#+begin_src shell
+man launchd.plist
+launchctl unload /Users/robert/Library/LaunchAgents/hn.kra.impftest.plist && launchctl load /Users/robert/Library/LaunchAgents/hn.kra.impftest.plist
+#+end_src
