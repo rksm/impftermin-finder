@@ -30,6 +30,13 @@ const impfstoffe = [
   },
 ];
 
+const impfstoffNamen = {
+  L920: "BioNTech",
+  L921: "Moderna",
+  L922: "AstraZeneca",
+  L923: "Johnson&Johnson",
+};
+
 interface Impfzentrum {
   Zentrumsname: string;
   PLZ: string;
@@ -158,7 +165,7 @@ type TerminSuchErgebnis =
   | {
       type: "success";
       termineVorhanden: boolean;
-      vorhandeneLeistungsmerkmale: any[];
+      vorhandeneLeistungsmerkmale: (keyof typeof impfstoffNamen)[];
     }
   | {
       type: "error-quota-reached";
@@ -232,18 +239,18 @@ async function impfcheck() {
   const browser = await puppeteer.launch({
     headless: false,
     // slowMo: 250, // slow down by 250ms
-    // userDataDir: "./puppeteer-user-data-dir",
+    userDataDir: "./puppeteer-user-data-dir",
     // devtools: true,
   });
 
   let exitCode = 0;
 
   console.time("appointment check");
+
   for (const ea of impfzentrenBrandenburg) {
     // if (ea.Zentrumsname !== "Impfzentrum Eberswalde") continue;
 
     const result = await checkAppointment(browser, ea);
-    console.log(result);
     if (result.type === "error-quota-reached") {
       console.error("Too many requests");
       exitCode = 1;
@@ -254,8 +261,17 @@ async function impfcheck() {
       break;
     } else {
       if (result.termineVorhanden) {
-        console.log(JSON.stringify(result, null, 2));
-        execSync(`say -v "Anna" "${ea.Zentrumsname} hat einen Termin!"`);
+        // console.log(JSON.stringify(result, null, 2));
+        let notification = `${ea.Zentrumsname} hat einen Termin`;
+        const vaccines = result.vorhandeneLeistungsmerkmale
+          .map((ea) => `mit ${impfstoffNamen[ea] ?? "einem unbekannten Impfstoff"}`)
+          .join(" und ");
+        if (vaccines) {
+          notification += " " + vaccines;
+        }
+        console.log(notification);
+        console.log(ea.URL);
+        execSync(`say -v "Anna" "${notification}"`);
       }
     }
   }
