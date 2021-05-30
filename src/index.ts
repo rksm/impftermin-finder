@@ -1,5 +1,8 @@
 import { execSync } from "child_process";
 
+const IS_LINUX = process.platform === "linux";
+const IS_MACOS = process.platform === "darwin";
+
 const impfstoffe = [
   {
     qualification: "L920",
@@ -177,8 +180,6 @@ type TerminSuchErgebnis =
 
 // env DEBUG="puppeteer:*" npm run run
 
-// app-corona-vaccination > div:nth-child(2) > div > div > label:nth-child(2) > span
-// app-corona-vaccination > div:nth-child(2) > div > div > label:nth-child(2) > span
 import puppeteer from "puppeteer";
 
 async function checkAppointment(
@@ -236,12 +237,18 @@ async function checkAppointment(
 
 async function impfcheck() {
   console.log(`Starting ${new Date().toISOString()}`);
-  const browser = await puppeteer.launch({
+  const opts: puppeteer.LaunchOptions & puppeteer.BrowserLaunchArgumentOptions = {
     headless: false,
     // slowMo: 250, // slow down by 250ms
     userDataDir: "./puppeteer-user-data-dir",
     // devtools: true,
-  });
+  };
+
+  if (IS_LINUX) {
+    opts.executablePath = "/usr/bin/chromium";
+  }
+
+  const browser = await puppeteer.launch(opts);
 
   let exitCode = 0;
 
@@ -249,6 +256,7 @@ async function impfcheck() {
 
   for (const ea of impfzentrenBrandenburg) {
     // if (ea.Zentrumsname !== "Impfzentrum Eberswalde") continue;
+    // if (ea.Zentrumsname !== "Impfzentrum Falkensee") continue;
 
     const result = await checkAppointment(browser, ea);
     if (result.type === "error-quota-reached") {
@@ -262,7 +270,7 @@ async function impfcheck() {
     } else {
       if (result.termineVorhanden) {
         // console.log(JSON.stringify(result, null, 2));
-        let notification = `${ea.Zentrumsname} hat einen Termin`;
+        let notification = `${ea.Zentrumsname} hat freie Kapazitäten`;
         const vaccines = result.vorhandeneLeistungsmerkmale
           .map((ea) => `mit ${impfstoffNamen[ea] ?? "einem unbekannten Impfstoff"}`)
           .join(" und ");
@@ -271,7 +279,12 @@ async function impfcheck() {
         }
         console.log(notification);
         console.log(ea.URL);
-        execSync(`say -v "Anna" "${notification}"`);
+        if (IS_MACOS) {
+          execSync(`say -v "Anna" "${notification}"`);
+        }
+        if (IS_LINUX) {
+          execSync(`notify-send impftest "${notification}"`);
+        }
       }
     }
   }

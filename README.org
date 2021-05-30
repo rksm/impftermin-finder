@@ -1,0 +1,88 @@
+* Finden von Terminen auf impfterminservice.de
+
+Das Programm fragt die Kapazitäten von Impfzentren im Land Brandenburg ab. Diese bieten über die Seite impfterminservice.de die Möglichkeit zur Terminvergabe an. Die Terminvergabe erfolgt in zwei Schritten:
+
+1. Ein Test ob ein Impfstoff in einem gegebenen Impfzentrum verfügbar ist. Sollte das der Fall sein, kann ein Impfberechtigter eine Code bekommen
+2. Mit dem Code kann dann ein Termin vereinbart werden.
+
+Dieses Programm hilft bei Schritt 1. Leider ist das Checken von freien Kapazitäten sehr mühselig da man einzeln auf die Impftzentren klicken muss ohne eine Übersicht zu erhalten wo es gerade freie Kapazitäten gibt. Auch wird dem Benutzer nicht mitgeteilt warum es keinen Code gibt. Zudem wird auch keine Angabe über die verfügbaren Impfstoffe gemacht obwohl diese Information im System eigentlich vefügbar ist.
+
+Dieses Programm fragt an allen Impfzentren an ob es Kapazitäten gibt und gibt dann heraus ob und welcher Impfstoff gerade wo verfügbar ist. Dies erfolgt im Moment nur für das Land Brandenburg, dies kann aber leicht auf die anderen Bundesländer ausgeweitet werden die auch impfterminservice.de zur Terminvergable benutzen.
+
+** Benutzung
+
+Vorraussetzung ist eine Installation von node.js / npm. Das Programm läuft auf Linux und MacOS. Auf MacOS wird die Sprachausgabe benutzt.
+
+#+begin_src shell
+git clone https://github.com/rksm/impftermin-finder
+cd impftermin-finder
+npm install
+npm run run
+#+end_src
+
+** Automatische checks
+
+Optional kann das Programm automatisch laufen gelassen werden, z.B. via MacOS' launchctl:
+
+1. Lege eine Datei =$HOME/Library/LaunchAgents/hn.kra.impftest.plist= an (ersetze =/PATH/TO/IMPFTEST-FINDER= mit dem Pfad von git clone, siehe oben und =USER= mit deinem OS Nutzernamen, das was =echo $USER= ausgibt):
+
+#+begin_src xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin</string>
+	</dict>
+	<key>Label</key>
+	<string>hn.kra.impftest</string>
+	<key>Nice</key>
+	<integer>1</integer>
+	<key>ProgramArguments</key>
+	<arrayn>
+		<string>/usr/local/bin/bash</string>
+		<string>-ic</string>
+		<string>'npm run run'</string>
+	</array>
+	<key>StandardErrorPath</key>
+	<string>/PATH/TO/IMPFTEST-FINDER/impftest.err</string>
+	<key>StandardOutPath</key>
+	<string>/PATH/TO/IMPFTEST-FINDER/impftest.out</string>
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict>
+			<key>Minute</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>Minute</key>
+			<integer>32</integer>
+		</dict>
+	</array>
+	<key>ThrottleInterval</key>
+	<integer>300</integer>
+	<key>UserName</key>
+	<string>USER</string>
+	<key>WorkingDirectory</key>
+	<string>/PATH/TO/IMPFTEST-FINDER</string>
+</dict>
+</plist>
+#+end_src
+
+Dies würde alle halbe Stunde (um 2 und 32 nach der vollen h) das Program aufrufen
+
+Und dann:
+
+#+begin_src shell
+launchctl load $HOME/Library/LaunchAgents/hn.kra.impftest.plist
+launchctl enable user/$(id -u)/hn.kra.impftest.plist
+#+end_src
+
+Zum deaktivieren:
+
+#+begin_src shell
+launchctl disable user/$(id -u)/hn.kra.impftest.plist
+launchctl unload $HOME/Library/LaunchAgents/hn.kra.impftest.plist
+#+end_src
